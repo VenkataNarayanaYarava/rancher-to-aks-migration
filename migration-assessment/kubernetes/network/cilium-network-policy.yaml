@@ -1,0 +1,40 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+
+metadata:
+  name: radiant-petclinic-cilium-policy
+  namespace: radiant-petclinic
+
+spec:
+  endpointSelector:
+    matchLabels:
+      app: radiant-petclinic
+
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: ingress-nginx
+
+  egress:
+
+    # Allow PostgreSQL access
+    - toEndpoints:
+        - matchLabels:
+            app: demo-db
+
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+
+    # Allow DNS resolution
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP

@@ -252,12 +252,12 @@ def main() -> None:
     )
     parser.add_argument(
         "--output-json",
-        default="migration-assessment/discovery/workload_inventory_yaml.json",
+        default="discovery/workload_inventory_yaml.json",
         help="Path to write JSON inventory."
     )
     parser.add_argument(
         "--output-csv",
-        default="migration-assessment/discovery/workload_inventory_yaml.csv",
+        default="discovery/workload_inventory_yaml.csv",
         help="Path to write CSV inventory."
     )
     args = parser.parse_args()

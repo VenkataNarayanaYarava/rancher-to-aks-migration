@@ -1,0 +1,21 @@
+{{- if and .Values.networkPolicy.enabled .Values.database.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-app-to-database
+  namespace: {{ .Values.namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ .Values.database.host }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: {{ .Values.name }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.database.port }}
+{{- end }}

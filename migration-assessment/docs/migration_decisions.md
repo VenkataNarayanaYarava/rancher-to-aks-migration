@@ -25,3 +25,17 @@
 * Helm packaging improves deployment standardization across environments.
 * NGINX ingress configuration supports external traffic routing and future TLS integration.
 * HPA and PDB improve production readiness and operational stability.
+
+
+## Cilium Network Policy Strategy
+
+The target AKS architecture will use Cilium as the CNI and network security layer.
+
+CiliumNetworkPolicy provides:
+- Identity-based security
+- Explicit ingress and egress controls
+- DNS-aware policies
+- FQDN filtering
+- Enhanced observability
+
+Current k3d environment uses standard Kubernetes NetworkPolicy while AKS target architecture includes CiliumNetworkPolicy enforcement.

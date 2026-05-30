@@ -18,7 +18,7 @@ spec:
       containers:
       - name: radiant-petclinic
         image: radiant-petclinic:v1
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Never
         env:
         - name: SPRING_PROFILES_ACTIVE
           value: postgres
@@ -55,6 +55,13 @@ spec:
             port: 8080
           initialDelaySeconds: 30
           periodSeconds: 5
+        startupProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 90
+          periodSeconds: 10
+          failureThreshold: 30
         resources:
           requests:
             memory: "512Mi"

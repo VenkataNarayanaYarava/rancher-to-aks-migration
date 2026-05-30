@@ -1,6 +1,80 @@
 [
   {
-    "source_file": "migration-assessment/kubernetes/base/deployment.yml",
+    "source_file": "kubernetes/base/database.yml",
+    "kind": "Secret",
+    "name": "demo-db",
+    "namespace": "radiant-petclinic",
+    "labels": {},
+    "annotations": {},
+    "app_label": "",
+    "details": {}
+  },
+  {
+    "source_file": "kubernetes/base/database.yml",
+    "kind": "Service",
+    "name": "demo-db",
+    "namespace": "radiant-petclinic",
+    "labels": {},
+    "annotations": {},
+    "app_label": "",
+    "service_type": "ClusterIP",
+    "service_ports": [
+      "5432->None"
+    ],
+    "selector": {
+      "app": "demo-db"
+    }
+  },
+  {
+    "source_file": "kubernetes/base/database.yml",
+    "kind": "Deployment",
+    "name": "demo-db",
+    "namespace": "radiant-petclinic",
+    "labels": {
+      "app": "demo-db"
+    },
+    "annotations": {},
+    "app_label": "demo-db",
+    "replicas": 1,
+    "container_images": [
+      "postgres:18.3"
+    ],
+    "container_ports": [
+      5432
+    ],
+    "resources": [
+      {
+        "requests": {
+          "memory": "256Mi",
+          "cpu": "100m"
+        },
+        "limits": {
+          "memory": "512Mi",
+          "cpu": "500m"
+        }
+      }
+    ],
+    "readiness_probe": [
+      {
+        "tcpSocket": {
+          "port": "postgresql"
+        },
+        "initialDelaySeconds": 30,
+        "periodSeconds": 5
+      }
+    ],
+    "liveness_probe": [
+      {
+        "tcpSocket": {
+          "port": "postgresql"
+        },
+        "initialDelaySeconds": 60,
+        "periodSeconds": 10
+      }
+    ]
+  },
+  {
+    "source_file": "kubernetes/base/deployment.yml",
     "kind": "Deployment",
     "name": "radiant-petclinic-deployment",
     "namespace": "radiant-petclinic",
@@ -50,17 +124,7 @@
     ]
   },
   {
-    "source_file": "migration-assessment/kubernetes/base/namespace.yml",
-    "kind": "Namespace",
-    "name": "radiant-petclinic",
-    "namespace": "default",
-    "labels": {},
-    "annotations": {},
-    "app_label": "",
-    "details": {}
-  },
-  {
-    "source_file": "migration-assessment/kubernetes/base/service.yml",
+    "source_file": "kubernetes/base/service.yml",
     "kind": "Service",
     "name": "radiant-petclinic-service",
     "namespace": "radiant-petclinic",
@@ -76,7 +140,7 @@
     }
   },
   {
-    "source_file": "migration-assessment/kubernetes/hpa-pdb/hpa.yml",
+    "source_file": "kubernetes/hpa-pdb/hpa.yml",
     "kind": "HorizontalPodAutoscaler",
     "name": "radiant-petclinic-hpa",
     "namespace": "radiant-petclinic",
@@ -101,7 +165,7 @@
     ]
   },
   {
-    "source_file": "migration-assessment/kubernetes/hpa-pdb/pdb.yml",
+    "source_file": "kubernetes/hpa-pdb/pdb.yml",
     "kind": "PodDisruptionBudget",
     "name": "radiant-petclinic-pdb",
     "namespace": "radiant-petclinic",
@@ -112,7 +176,7 @@
     "max_unavailable": null
   },
   {
-    "source_file": "migration-assessment/kubernetes/ingress/petclinic-ingress.yml",
+    "source_file": "kubernetes/ingress/petclinic-ingress.yml",
     "kind": "Ingress",
     "name": "radiant-petclinic-ingress",
     "namespace": "radiant-petclinic",
@@ -125,7 +189,44 @@
     ]
   },
   {
-    "source_file": "migration-assessment/kubernetes/network/allow-nginx-ingress.yaml",
+    "source_file": "kubernetes/network/allow-app-to-database.yml",
+    "kind": "NetworkPolicy",
+    "name": "allow-app-to-database",
+    "namespace": "radiant-petclinic",
+    "labels": {},
+    "annotations": {},
+    "app_label": "",
+    "policy_types": [
+      "Ingress"
+    ],
+    "pod_selector": {
+      "matchLabels": {
+        "app": "demo-db"
+      }
+    },
+    "ingress": [
+      {
+        "from": [
+          {
+            "podSelector": {
+              "matchLabels": {
+                "app": "radiant-petclinic"
+              }
+            }
+          }
+        ],
+        "ports": [
+          {
+            "protocol": "TCP",
+            "port": 5432
+          }
+        ]
+      }
+    ],
+    "egress": []
+  },
+  {
+    "source_file": "kubernetes/network/allow-nginx-ingress.yaml",
     "kind": "NetworkPolicy",
     "name": "allow-nginx-ingress",
     "namespace": "radiant-petclinic",
@@ -156,7 +257,132 @@
     "egress": []
   },
   {
-    "source_file": "migration-assessment/kubernetes/network/default-deny.yml",
+    "source_file": "kubernetes/network/allow-radiant-petclinic-egress.yml",
+    "kind": "NetworkPolicy",
+    "name": "allow-radiant-petclinic-egress",
+    "namespace": "radiant-petclinic",
+    "labels": {},
+    "annotations": {},
+    "app_label": "",
+    "policy_types": [
+      "Egress"
+    ],
+    "pod_selector": {
+      "matchLabels": {
+        "app": "radiant-petclinic"
+      }
+    },
+    "ingress": [],
+    "egress": [
+      {
+        "to": [
+          {
+            "podSelector": {
+              "matchLabels": {
+                "app": "demo-db"
+              }
+            }
+          }
+        ],
+        "ports": [
+          {
+            "protocol": "TCP",
+            "port": "5432# Allow all outbound traffic from the PetClinic app pods"
+          }
+        ]
+      },
+      {
+        "to": [
+          {
+            "namespaceSelector": {
+              "matchLabels": {
+                "kubernetes.io/metadata.name": "kube-system"
+              }
+            }
+          }
+        ],
+        "ports": [
+          {
+            "protocol": "UDP",
+            "port": 53
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "source_file": "kubernetes/network/cilium-network-policy.yaml",
+    "kind": "CiliumNetworkPolicy",
+    "name": "radiant-petclinic-cilium-policy",
+    "namespace": "radiant-petclinic",
+    "labels": {},
+    "annotations": {},
+    "app_label": "",
+    "details": {
+      "endpointSelector": {
+        "matchLabels": {
+          "app": "radiant-petclinic"
+        }
+      },
+      "ingress": [
+        {
+          "fromEndpoints": [
+            {
+              "matchLabels": {
+                "k8s:io.kubernetes.pod.namespace": "ingress-nginx"
+              }
+            }
+          ]
+        }
+      ],
+      "egress": [
+        {
+          "toEndpoints": [
+            {
+              "matchLabels": {
+                "app": "demo-db"
+              }
+            }
+          ],
+          "toPorts": [
+            {
+              "ports": [
+                {
+                  "port": "5432",
+                  "protocol": "TCP"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "toEndpoints": [
+            {
+              "matchLabels": {
+                "k8s:io.kubernetes.pod.namespace": "kube-system"
+              }
+            }
+          ],
+          "toPorts": [
+            {
+              "ports": [
+                {
+                  "port": "53",
+                  "protocol": "UDP"
+                },
+                {
+                  "port": "53",
+                  "protocol": "TCP"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "source_file": "kubernetes/network/default-deny.yml",
     "kind": "NetworkPolicy",
     "name": "default-deny",
     "namespace": "radiant-petclinic",
