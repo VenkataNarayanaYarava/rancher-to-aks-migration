@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: radiant-petclinic-deployment
+  namespace: radiant-petclinic
+  labels:
+    app: radiant-petclinic
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: radiant-petclinic
+  template:
+    metadata:
+      labels:
+        app: radiant-petclinic
+    spec:
+      containers:
+      - name: radiant-petclinic
+        image: radiant-petclinic:v1
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: postgres
+        - name: SERVICE_BINDING_ROOT
+          value: /bindings
+        - name: SPRING_APPLICATION_JSON
+          value: |
+            {
+              "management.endpoint.health.probes.add-additional-paths": true
+            }
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:postgresql://demo-db:5432/petclinic"
+        - name: SPRING_DATASOURCE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: demo-db
+              key: username
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: demo-db
+              key: password
+        ports:
+        - containerPort: 8080
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+        volumeMounts:
+        - mountPath: /bindings/secret
+          name: binding
+          readOnly: true
+      volumes:
+      - name: binding
+        projected:
+          sources:
+          - secret:
+              name: demo-db

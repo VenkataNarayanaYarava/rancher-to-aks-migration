@@ -1,0 +1,10 @@
+# Common Helm ignore file
+.DS_Store
+.git
+.gitignore
+node_modules
+*.swp
+*.bak
+*.tmp
+*.orig
+migration-assessment/*

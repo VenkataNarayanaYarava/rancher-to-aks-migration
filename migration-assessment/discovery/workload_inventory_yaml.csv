@@ -1,0 +1,9 @@
+source_file,kind,name,namespace,app_label,labels,annotations,replicas,container_images,container_ports,service_type,service_ports,ingress_class,hosts,target_kind,target_name,min_replicas,max_replicas,policy_types,pod_selector,selector
+migration-assessment/kubernetes/base/deployment.yml,Deployment,radiant-petclinic-deployment,radiant-petclinic,radiant-petclinic,app=radiant-petclinic,,2,radiant-petclinic:v1,8080,,,,,,,,,,,
+migration-assessment/kubernetes/base/namespace.yml,Namespace,radiant-petclinic,default,,,,,,,,,,,,,,,,,
+migration-assessment/kubernetes/base/service.yml,Service,radiant-petclinic-service,radiant-petclinic,,,,,,,ClusterIP,80->8080,,,,,,,,,app=radiant-petclinic
+migration-assessment/kubernetes/hpa-pdb/hpa.yml,HorizontalPodAutoscaler,radiant-petclinic-hpa,radiant-petclinic,,,,,,,,,,,Deployment,radiant-petclinic-deployment,2,5,,,
+migration-assessment/kubernetes/hpa-pdb/pdb.yml,PodDisruptionBudget,radiant-petclinic-pdb,radiant-petclinic,,,,,,,,,,,,,,,,,
+migration-assessment/kubernetes/ingress/petclinic-ingress.yml,Ingress,radiant-petclinic-ingress,radiant-petclinic,,,,,,,,,nginx,radiant-petclinic.local,,,,,,,
+migration-assessment/kubernetes/network/allow-nginx-ingress.yaml,NetworkPolicy,allow-nginx-ingress,radiant-petclinic,,,,,,,,,,,,,,,Ingress,matchLabels={'app': 'radiant-petclinic'},
+migration-assessment/kubernetes/network/default-deny.yml,NetworkPolicy,default-deny,radiant-petclinic,,,,,,,,,,,,,,,Ingress;Egress,,

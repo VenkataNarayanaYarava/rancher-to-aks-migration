@@ -1,0 +1,64 @@
+namespace: radiant-petclinic
+name: radiant-petclinic
+
+image:
+  repository: radiant-petclinic
+  tag: v1
+  pullPolicy: IfNotPresent
+
+replicaCount: 2
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+ingress:
+  enabled: true
+  ingressClassName: nginx
+  host: radiant-petclinic.local
+  annotations: {}
+  tls: []
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+
+pdb:
+  enabled: true
+  minAvailable: 1
+
+networkPolicy:
+  enabled: true
+  allowIngressNamespace: ingress-nginx
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 1Gi
+  requests:
+    cpu: 250m
+    memory: 512Mi
+
+livenessProbe:
+  initialDelaySeconds: 60
+  periodSeconds: 10
+  path: /
+  port: 8080
+
+readinessProbe:
+  initialDelaySeconds: 30
+  periodSeconds: 5
+  path: /
+  port: 8080
+
+database:
+  enabled: true
+  type: postgres
+  host: demo-db
+  port: 5432
+  name: petclinic
+  username: user
+  secretName: demo-db

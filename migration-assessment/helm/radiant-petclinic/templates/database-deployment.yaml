@@ -1,0 +1,88 @@
+{{- if .Values.database.enabled }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Values.database.secretName }}
+  namespace: {{ .Values.namespace }}
+type: servicebinding.io/postgresql
+stringData:
+  type: "{{ .Values.database.type }}"
+  provider: "{{ .Values.database.type }}"
+  host: "{{ .Values.database.host }}"
+  port: "{{ .Values.database.port }}"
+  database: "{{ .Values.database.name }}"
+  username: "{{ .Values.database.username }}"
+  password: "changeme"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.database.host }}
+  namespace: {{ .Values.namespace }}
+spec:
+  ports:
+    - port: {{ .Values.database.port }}
+  selector:
+    app: {{ .Values.database.host }}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.database.host }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.database.host }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.database.host }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.database.host }}
+    spec:
+      containers:
+        - image: postgres:18.3
+          name: postgresql
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.secretName }}
+                  key: username
+            - name: POSTGRES_PASSWORD
+              value: "changeme"
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.secretName }}
+                  key: database
+          ports:
+            - containerPort: {{ .Values.database.port }}
+              name: postgresql
+          livenessProbe:
+            tcpSocket:
+              port: postgresql
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: postgresql
+            initialDelaySeconds: 30
+            periodSeconds: 5
+          startupProbe:
+            tcpSocket:
+              port: postgresql
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+{{- end }}

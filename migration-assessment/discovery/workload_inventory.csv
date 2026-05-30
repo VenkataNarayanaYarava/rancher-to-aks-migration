@@ -1,0 +1,5 @@
+Workload Type,Name,Namespace,Replicas,Container Port,Service Type,Target Port,Ingress Enabled,HPA,CPU Request,Memory Request,CPU Limit,Memory Limit,Image
+Deployment,radiant-petclinic-deployment,radiant-petclinic,2,8080,ClusterIP,80,No,Yes,250m,512Mi,500m,1Gi,radiant-petclinic:v1
+Service,radiant-petclinic-service,radiant-petclinic,N/A,N/A,ClusterIP,80,No,N/A,N/A,N/A,N/A,N/A,N/A
+Ingress,N/A,radiant-petclinic,N/A,N/A,N/A,N/A,No,N/A,N/A,N/A,N/A,N/A,N/A
+HPA,radiant-petclinic-hpa,radiant-petclinic,2-5,N/A,N/A,N/A,No,Yes,250m,512Mi,500m,1Gi,N/A

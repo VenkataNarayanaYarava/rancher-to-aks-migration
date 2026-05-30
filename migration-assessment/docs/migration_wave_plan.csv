@@ -1,0 +1,2 @@
+Wave,Application,Namespace,Dependencies,Cutover Window,Risk Level
+As I have one App have one wave only,radiant-petclinic,radiant-petclinic,"NGINX Ingress,Kubernetes Service,Docker,Kubernetes",Weekend Maintenance Window (2 Hours),Medium

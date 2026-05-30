@@ -1,0 +1,174 @@
+[
+  {
+    "source_file": "migration-assessment/kubernetes/base/deployment.yml",
+    "kind": "Deployment",
+    "name": "radiant-petclinic-deployment",
+    "namespace": "radiant-petclinic",
+    "labels": {
+      "app": "radiant-petclinic"
+    },
+    "annotations": {},
+    "app_label": "radiant-petclinic",
+    "replicas": 2,
+    "container_images": [
+      "radiant-petclinic:v1"
+    ],
+    "container_ports": [
+      8080
+    ],
+    "resources": [
+      {
+        "requests": {
+          "memory": "512Mi",
+          "cpu": "250m"
+        },
+        "limits": {
+          "memory": "1Gi",
+          "cpu": "500m"
+        }
+      }
+    ],
+    "readiness_probe": [
+      {
+        "httpGet": {
+          "path": "/",
+          "port": 8080
+        },
+        "initialDelaySeconds": 30,
+        "periodSeconds": 5
+      }
+    ],
+    "liveness_probe": [
+      {
+        "httpGet": {
+          "path": "/",
+          "port": 8080
+        },
+        "initialDelaySeconds": 60,
+        "periodSeconds": 10
+      }
+    ]
+  },
+  {
+    "source_file": "migration-assessment/kubernetes/base/namespace.yml",
+    "kind": "Namespace",
+    "name": "radiant-petclinic",
+    "namespace": "default",
+    "labels": {},
+    "annotations": {},
+    "app_label": "",
+    "details": {}
+  },
+  {
+    "source_file": "migration-assessment/kubernetes/base/service.yml",
+    "kind": "Service",
+    "name": "radiant-petclinic-service",
+    "namespace": "radiant-petclinic",
+    "labels": {},
+    "annotations": {},
+    "app_label": "",
+    "service_type": "ClusterIP",
+    "service_ports": [
+      "80->8080"
+    ],
+    "selector": {
+      "app": "radiant-petclinic"
+    }
+  },
+  {
+    "source_file": "migration-assessment/kubernetes/hpa-pdb/hpa.yml",
+    "kind": "HorizontalPodAutoscaler",
+    "name": "radiant-petclinic-hpa",
+    "namespace": "radiant-petclinic",
+    "labels": {},
+    "annotations": {},
+    "app_label": "",
+    "target_kind": "Deployment",
+    "target_name": "radiant-petclinic-deployment",
+    "min_replicas": 2,
+    "max_replicas": 5,
+    "metrics": [
+      {
+        "type": "Resource",
+        "resource": {
+          "name": "cpu",
+          "target": {
+            "type": "Utilization",
+            "averageUtilization": 70
+          }
+        }
+      }
+    ]
+  },
+  {
+    "source_file": "migration-assessment/kubernetes/hpa-pdb/pdb.yml",
+    "kind": "PodDisruptionBudget",
+    "name": "radiant-petclinic-pdb",
+    "namespace": "radiant-petclinic",
+    "labels": {},
+    "annotations": {},
+    "app_label": "",
+    "min_available": 1,
+    "max_unavailable": null
+  },
+  {
+    "source_file": "migration-assessment/kubernetes/ingress/petclinic-ingress.yml",
+    "kind": "Ingress",
+    "name": "radiant-petclinic-ingress",
+    "namespace": "radiant-petclinic",
+    "labels": {},
+    "annotations": {},
+    "app_label": "",
+    "ingress_class": "nginx",
+    "hosts": [
+      "radiant-petclinic.local"
+    ]
+  },
+  {
+    "source_file": "migration-assessment/kubernetes/network/allow-nginx-ingress.yaml",
+    "kind": "NetworkPolicy",
+    "name": "allow-nginx-ingress",
+    "namespace": "radiant-petclinic",
+    "labels": {},
+    "annotations": {},
+    "app_label": "",
+    "policy_types": [
+      "Ingress"
+    ],
+    "pod_selector": {
+      "matchLabels": {
+        "app": "radiant-petclinic"
+      }
+    },
+    "ingress": [
+      {
+        "from": [
+          {
+            "namespaceSelector": {
+              "matchLabels": {
+                "kubernetes.io/metadata.name": "ingress-nginx"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "egress": []
+  },
+  {
+    "source_file": "migration-assessment/kubernetes/network/default-deny.yml",
+    "kind": "NetworkPolicy",
+    "name": "default-deny",
+    "namespace": "radiant-petclinic",
+    "labels": {},
+    "annotations": {},
+    "app_label": "",
+    "policy_types": [
+      "Ingress",
+      "Egress"
+    ],
+    "pod_selector": {},
+    "ingress": [],
+    "egress": []
+  }
+]

@@ -1,0 +1,7 @@
+Source,Destination,Protocol,Port,Description
+Browser,NGINX Ingress Controller,HTTP,80,User accesses application
+NGINX Ingress Controller,Kubernetes Service,radiant-petclinic-service,80,Routes traffic to service
+Kubernetes Service,Application Pods,HTTP,8080,Load balances traffic to pods
+Pods,Pods,None,None,Internal application processing
+Kubernetes,HPA Metrics Server,HTTPS,443,Used for autoscaling metrics
+Ingress Controller,External DNS,radiant-petclinic.local,80,Host-based routing
