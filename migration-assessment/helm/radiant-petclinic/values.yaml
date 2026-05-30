@@ -60,5 +60,9 @@ database:
   host: demo-db
   port: 5432
   name: petclinic
-  username: user
   secretName: demo-db
+  createSecret: true
+  # username/password are only required when createSecret is true.
+  # Do not hardcode sensitive values in values.yaml for production.
+  username: user
+  password: pass

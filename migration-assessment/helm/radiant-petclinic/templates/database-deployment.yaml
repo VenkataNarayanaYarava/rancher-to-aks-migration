@@ -1,4 +1,5 @@
 {{- if .Values.database.enabled }}
+{{- if .Values.database.createSecret }}
 ---
 apiVersion: v1
 kind: Secret
@@ -13,8 +14,9 @@ stringData:
   port: "{{ .Values.database.port }}"
   database: "{{ .Values.database.name }}"
   username: "{{ .Values.database.username }}"
-  password: "changeme"
+  password: "{{ .Values.database.password }}"
 
+{{- end }}
 ---
 apiVersion: v1
 kind: Service
@@ -54,7 +56,10 @@ spec:
                   name: {{ .Values.database.secretName }}
                   key: username
             - name: POSTGRES_PASSWORD
-              value: "changeme"
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.secretName }}
+                  key: password
             - name: POSTGRES_DB
               valueFrom:
                 secretKeyRef:

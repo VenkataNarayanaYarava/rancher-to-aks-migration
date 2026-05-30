@@ -58,6 +58,13 @@ spec:
               port: {{ .Values.readinessProbe.port }}
             initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+          startupProbe:
+            httpGet:
+              path: {{ .Values.readinessProbe.path }}
+              port: {{ .Values.readinessProbe.port }}
+            initialDelaySeconds: 90
+            periodSeconds: 10
+            failureThreshold: 30
           resources:
             requests:
               cpu: {{ .Values.resources.requests.cpu }}
