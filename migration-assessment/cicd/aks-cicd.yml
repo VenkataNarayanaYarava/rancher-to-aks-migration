@@ -1,0 +1,115 @@
+name: AKS CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+
+env:
+  IMAGE_NAME: radiant-petclinic
+  ACR_LOGIN_SERVER: ${{ secrets.ACR_LOGIN_SERVER }}
+
+jobs:
+
+# -------------------------
+# 1. BUILD + SCAN + PUSH
+# -------------------------
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      # -------------------------
+      # Azure Login (OIDC recommended)
+      # -------------------------
+      - name: Azure Login
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # -------------------------
+      # Login to ACR
+      # -------------------------
+      - name: ACR Login
+        uses: azure/docker-login@v2
+        with:
+          login-server: contoso.azurecr.io
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      # -------------------------
+      # Build Docker Image
+      # -------------------------
+      - name: Build Image
+        run: |
+          docker build -t $ACR_LOGIN_SERVER/$IMAGE_NAME:v1 .
+
+      # -------------------------
+      # 🔐 Docker Scout Security Scan
+      # -------------------------
+      
+      - name: Docker Scout Scan
+        uses: docker/scout-action@v1
+        with:
+          command: cves
+          image: ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:v1
+          only-severities: critical,high
+          exit-code: true
+
+      # -------------------------
+      # Push Image to ACR
+      # -------------------------
+      - name: Push Image
+        run: |
+          docker push $ACR_LOGIN_SERVER/$IMAGE_NAME:v1
+
+# -------------------------
+# 2. DEPLOY TO AKS (HELM)
+# -------------------------
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production   # 👈 approval gate
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      # -------------------------
+      # Azure Login
+      # -------------------------
+      - name: Azure Login
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # -------------------------
+      # Get AKS credentials
+      # -------------------------
+      - name: Get AKS Credentials
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ secrets.AKS_RESOURCE_GROUP }} \
+            --name ${{ secrets.AKS_NAME }} \
+            --overwrite-existing
+
+      # -------------------------
+      # Install Helm
+      # -------------------------
+      - name: Install Helm
+        uses: azure/setup-helm@v5.0.0
+
+      # -------------------------
+      # Deploy via Helm
+      # -------------------------
+      - name: Helm Deploy
+        run: |
+          helm upgrade --install radiant-petclinic ./migration-assessment/helm \
+            --namespace radiant-petclinic \
+            --create-namespace \
+            --set image.repository=$ACR_LOGIN_SERVER/$IMAGE_NAME \
+            --set image.tag=v1
